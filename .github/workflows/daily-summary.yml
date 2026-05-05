@@ -39,6 +39,10 @@ jobs:
       - name: Set current date as environment variable
         run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
+      # --- 新增步骤：给生成的网页套上漂亮的 Jekyll 主题 ---
+      - name: Add Theme Config
+        run: echo "theme: jekyll-theme-cayman" > docs/_config.yml
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -48,3 +52,5 @@ jobs:
           commit_message: "📝 Daily Summary: ${{ env.DATE }}"
           publish_branch: gh-pages
           enable_jekyll: true
+          # --- 新增参数：绑定你的自定义域名 ---
+          cname: horizon.thetamind.ai
