@@ -36,6 +36,12 @@
         "owner": "triton-lang",
         "repo": "triton",
         "enabled": true
+      },
+      {
+        "type": "repo_releases",
+        "owner": "neovim",
+        "repo": "neovim",
+        "enabled": true
       }
     ],
     "hackernews": {
@@ -57,6 +63,36 @@
         "category": "github-trending"
       },
       {
+        "name": "Hackaday",
+        "url": "https://hackaday.com/feed/",
+        "enabled": true,
+        "category": "hardware"
+      },
+      {
+        "name": "Nature",
+        "url": "https://www.nature.com/nature.rss",
+        "enabled": true,
+        "category": "science"
+      },
+      {
+        "name": "Quanta Magazine",
+        "url": "https://api.quantamagazine.org/feed/",
+        "enabled": true,
+        "category": "science"
+      },
+      {
+        "name": "Stanford AI Lab (SAIL) Blog",
+        "url": "https://ai.stanford.edu/blog/feed.xml",
+        "enabled": true,
+        "category": "ai-research"
+      },
+      {
+        "name": "AI Weekly",
+        "url": "https://aiweekly.co/issues.rss",
+        "enabled": true,
+        "category": "ai-news"
+      },
+      {
         "name": "LWN.net",
         "url": "https://lwn.net/headlines/full_text?key=${LWN_KEY}",
         "enabled": false,
@@ -76,6 +112,14 @@
         },
         {
           "subreddit": "LocalLLaMA",
+          "enabled": true,
+          "sort": "hot",
+          "time_filter": "day",
+          "fetch_limit": 15,
+          "min_score": 60
+        },
+        {
+          "subreddit": "science",
           "enabled": true,
           "sort": "hot",
           "time_filter": "day",
