@@ -3,7 +3,7 @@
   "ai": {
     "provider": "openai",
     "model": "MiMo-V2.5-Pro",
-    "base_url": "OPENAI_API_BASE",
+    "base_url": "https://token-plan-cn.xiaomimimo.com/v1",
     "api_key_env": "OPENAI_API_KEY",
     "temperature": 0.3,
     "max_tokens": 8192,
