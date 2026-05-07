@@ -124,9 +124,116 @@
     }
   }
 
+  /** Home page: lightweight search over generated index */
+  function setupHomeSearch() {
+    var zhInput = document.getElementById('hz-search-input-zh');
+    var enInput = document.getElementById('hz-search-input-en');
+    var zhOut = document.getElementById('hz-search-results-zh');
+    var enOut = document.getElementById('hz-search-results-en');
+    if (!zhInput && !enInput) return; // not on home
+
+    function esc(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function normalize(s) {
+      return String(s || '').toLowerCase().trim();
+    }
+
+    function parseQuery(q) {
+      q = normalize(q);
+      if (!q) return { text: '', tags: [] };
+      var tags = [];
+      q.split(/\s+/).forEach(function (tok) {
+        if (tok[0] === '#') tags.push(tok.slice(1));
+      });
+      return { text: q.replace(/#[^\s]+/g, '').trim(), tags: tags };
+    }
+
+    var index = null;
+    var indexPromise = null;
+
+    function loadIndex() {
+      if (indexPromise) return indexPromise;
+      var url = (window.HORIZON_BASEURL || '') + '/assets/search-index.json';
+      indexPromise = fetch(url, { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .then(function (j) { index = Array.isArray(j) ? j : []; return index; })
+        .catch(function () { index = []; return index; });
+      return indexPromise;
+    }
+
+    function render(outEl, items, q) {
+      if (!outEl) return;
+      if (!q) { outEl.innerHTML = ''; return; }
+      if (!items.length) {
+        outEl.innerHTML = '<div class="meta">No matches.</div>';
+        return;
+      }
+      var html = '<ul>';
+      items.slice(0, 12).forEach(function (it) {
+        var tags = (it.tags || []).map(function (t) { return '<code>#' + esc(t) + '</code>'; }).join(' ');
+        var meta = esc(it.digest_date || '') + (it.score != null ? (' · ⭐️ ' + esc(it.score) + '/10') : '');
+        html += '<li><a href="' + esc(it.digest_url) + '">' + esc(it.title) + '</a>'
+          + '<div class="meta">' + meta + (tags ? (' · ' + tags) : '') + '</div></li>';
+      });
+      html += '</ul>';
+      outEl.innerHTML = html;
+    }
+
+    function search(lang, q, outEl) {
+      var parsed = parseQuery(q);
+      if (!parsed.text && !parsed.tags.length) { render(outEl, [], ''); return; }
+      loadIndex().then(function () {
+        var text = parsed.text;
+        var tags = parsed.tags.map(normalize);
+        var res = (index || []).filter(function (it) {
+          if (lang && it.lang && it.lang !== lang) return false;
+          var hay = normalize(it.title) + ' ' + normalize((it.tags || []).join(' '));
+          if (text && hay.indexOf(text) === -1) return false;
+          if (tags.length) {
+            var itTags = (it.tags || []).map(normalize);
+            for (var i = 0; i < tags.length; i++) {
+              if (itTags.indexOf(tags[i]) === -1) return false;
+            }
+          }
+          return true;
+        });
+        render(outEl, res, q);
+      });
+    }
+
+    function debounce(fn, ms) {
+      var t = null;
+      return function () {
+        var args = arguments;
+        clearTimeout(t);
+        t = setTimeout(function () { fn.apply(null, args); }, ms);
+      };
+    }
+
+    var onZh = debounce(function (e) { search('zh', e.target.value, zhOut); }, 120);
+    var onEn = debounce(function (e) { search('en', e.target.value, enOut); }, 120);
+
+    if (zhInput) {
+      zhInput.addEventListener('input', onZh);
+      zhInput.addEventListener('focus', function () { loadIndex(); });
+    }
+    if (enInput) {
+      enInput.addEventListener('input', onEn);
+      enInput.addEventListener('focus', function () { loadIndex(); });
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     processScoreBadges();
     markSemanticElements();
     setupLanguageToggle();
+    setupHomeSearch();
   });
 })();

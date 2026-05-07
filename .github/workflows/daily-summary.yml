@@ -34,6 +34,161 @@ jobs:
           LWN_KEY: ${{ secrets.LWN_KEY }}
         run: uv run horizon --hours 24
 
+      - name: Generate site stats (articles/digests)
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          from datetime import datetime, timezone
+
+          data_summaries = Path("data") / "summaries"
+          docs_posts = Path("docs") / "_posts"
+          out = Path("docs") / "_data" / "stats.json"
+          out.parent.mkdir(parents=True, exist_ok=True)
+
+          def read_text(p: Path) -> str:
+            try:
+              return p.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+              return p.read_text(encoding="utf-8", errors="ignore")
+
+          # Prefer counting from data/summaries (source-of-truth for selected items)
+          files = []
+          if data_summaries.exists():
+            files = sorted(data_summaries.glob("*.md"))
+          if not files and docs_posts.exists():
+            files = sorted(docs_posts.glob("*.md"))
+
+          total_articles = 0
+          total_fetched = 0
+          last_digest_date = None
+
+          re_selected = re.compile(r"^##\\s+\\[", re.M)
+          re_header = re.compile(r"^>\\s*(?:From\\s+(\\d+)\\s+items,\\s+(\\d+)\\s+important|Analyzed\\s+(\\d+)\\s+items)", re.M)
+          re_date = re.compile(r"\\b(\\d{4}-\\d{2}-\\d{2})\\b")
+
+          for f in files:
+            txt = read_text(f)
+            total_articles += len(re_selected.findall(txt))
+
+            m = re_header.search(txt)
+            if m:
+              if m.group(1):
+                total_fetched += int(m.group(1))
+              elif m.group(3):
+                total_fetched += int(m.group(3))
+
+            dm = re_date.search(f.name) or re_date.search(txt.splitlines()[0] if txt else "")
+            if dm:
+              d = dm.group(1)
+              if last_digest_date is None or d > last_digest_date:
+                last_digest_date = d
+
+          def count_posts_by_lang(lang: str) -> int:
+            if not docs_posts.exists():
+              return 0
+            c = 0
+            for p in docs_posts.glob("*.md"):
+              t = read_text(p)
+              if re.search(rf"^lang:\\s*{re.escape(lang)}\\s*$", t, re.M):
+                c += 1
+            return c
+
+          total_digests_zh = count_posts_by_lang("zh")
+          total_digests_en = count_posts_by_lang("en")
+          total_digests = total_digests_zh + total_digests_en
+
+          payload = {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "total_articles": int(total_articles),
+            "total_fetched": int(total_fetched),
+            "total_digests": int(total_digests),
+            "total_digests_zh": int(total_digests_zh),
+            "total_digests_en": int(total_digests_en),
+            "last_digest_date": last_digest_date,
+          }
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8")
+          print("Wrote", out, "->", payload)
+          PY
+
+      - name: Generate search index (titles/tags)
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+
+          posts_dir = Path("docs") / "_posts"
+          out = Path("docs") / "assets" / "search-index.json"
+          out.parent.mkdir(parents=True, exist_ok=True)
+
+          def read_text(p: Path) -> str:
+            try:
+              return p.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+              return p.read_text(encoding="utf-8", errors="ignore")
+
+          if not posts_dir.exists():
+            out.write_text("[]\n", encoding="utf-8")
+            print("No posts found; wrote empty index:", out)
+            raise SystemExit(0)
+
+          # Item header looks like: ## [Title](url) ⭐️ 8.5/10
+          re_item = re.compile(r"^##\s+\[(?P<title>.+?)\]\((?P<url>[^)]+)\)\s+⭐️\s*(?P<score>\d+(?:\.\d+)?)\/10\s*$", re.M)
+          # Tags line looks like: **Tags**: `#a`, `#b`  OR **标签**: `#a`, `#b`
+          re_tags = re.compile(r"^\*\*(?:Tags|标签)\*\*:\s*(?P<body>.+?)\s*$", re.M)
+          re_tag = re.compile(r"`#([^`]+)`")
+          re_lang = re.compile(r"^lang:\s*(zh|en)\s*$", re.M)
+          re_date = re.compile(r"(\d{4}-\d{2}-\d{2})")
+
+          entries = []
+          for md in sorted(posts_dir.glob("*.md")):
+            txt = read_text(md)
+            lang_m = re_lang.search(txt)
+            lang = lang_m.group(1) if lang_m else None
+
+            date_m = re_date.search(md.name) or re_date.search(txt)
+            digest_date = date_m.group(1) if date_m else None
+
+            # Post url (Jekyll): /YYYY/MM/DD/slug.html
+            # We can rely on relative link using file name (works on GitHub Pages permalink default)
+            # But safer: link to post page via Jekyll, which isn't available here. Use filename-based guess:
+            digest_url = None
+            if digest_date:
+              y, m, d = digest_date.split("-")
+              slug = md.stem  # without .md
+              digest_url = f"/{y}/{m}/{d}/{slug}.html"
+
+            items = list(re_item.finditer(txt))
+            # Precompute tags per-item by scanning following lines after each header until next '---' divider
+            for i, m in enumerate(items):
+              title = m.group("title").strip()
+              url = m.group("url").strip()
+              score = float(m.group("score"))
+              start = m.end()
+              end = items[i + 1].start() if i + 1 < len(items) else len(txt)
+              chunk = txt[start:end]
+              tags = []
+              tm = re_tags.search(chunk)
+              if tm:
+                tags = [t.strip() for t in re_tag.findall(tm.group("body")) if t.strip()]
+
+              entries.append(
+                {
+                  "lang": lang,
+                  "digest_date": digest_date,
+                  "digest_url": digest_url or url,
+                  "title": title,
+                  "score": score,
+                  "tags": tags,
+                }
+              )
+
+          out.write_text(json.dumps(entries, ensure_ascii=False) + "\n", encoding="utf-8")
+          print("Wrote", out, "entries:", len(entries))
+          PY
+
       - name: Set current date as environment variable
         run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
