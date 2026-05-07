@@ -1,30 +1,30 @@
 /* ===== Horizon Custom Styles ===== */
 
 /* --- CSS Variables & Dark Mode (Horizon Dawn) --- */
-/* Palette derived from horizon-header.svg sunrise:
-   #312e81 deep indigo · #be185d rose · #f97316 orange · #fbbf24 gold
-   #4c1d95 mountain purple · #701a75 distant purple                  */
+/* Palette: blue (preferred) */
 :root {
-  --hz-bg: #faf8f5;          /* warm parchment white */
-  --hz-surface: #f3f0eb;     /* slightly warm gray */
-  --hz-border: #e0dbd3;      /* warm border */
-  --hz-text: #2d2a3e;        /* deep indigo-ink */
-  --hz-text-muted: #7c7891;  /* muted lavender gray */
-  --hz-link: #6d4aaa;        /* mountain purple, lighter */
-  --hz-code-bg: #f0ede7;     /* warm code bg */
-  --hz-accent: #e0652e;      /* sunrise orange, toned down */
+  --hz-bg: #f7fafc;          /* cool off-white */
+  --hz-surface: #ffffff;     /* card surface */
+  --hz-border: #e5e7eb;      /* cool border */
+  --hz-text: #0f172a;        /* slate-900 */
+  --hz-text-muted: #64748b;  /* slate-500 */
+  --hz-link: #2563eb;        /* blue-600 */
+  --hz-code-bg: #f1f5f9;     /* slate-100 */
+  --hz-accent: #0ea5e9;      /* sky-500 */
+  --hz-accent-2: #1d4ed8;    /* blue-700 */
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --hz-bg: #1a1726;        /* pre-dawn deep purple-black */
-    --hz-surface: #231f33;   /* night sky surface */
-    --hz-border: #342f4a;    /* indigo border */
-    --hz-text: #e8e4f0;      /* moonlight white-lavender */
-    --hz-text-muted: #8c86a0; /* muted twilight */
-    --hz-link: #f0a848;      /* dawn gold */
-    --hz-code-bg: #211d30;   /* deep code bg */
-    --hz-accent: #e87040;    /* sunrise orange-coral */
+    --hz-bg: #0b1220;        /* deep navy */
+    --hz-surface: #0f1b2d;   /* navy surface */
+    --hz-border: #1f2a44;    /* border */
+    --hz-text: #e5e7eb;      /* gray-200 */
+    --hz-text-muted: #93a4b8; /* muted */
+    --hz-link: #60a5fa;      /* blue-400 */
+    --hz-code-bg: #0b1626;   /* deep code bg */
+    --hz-accent: #38bdf8;    /* sky-400 */
+    --hz-accent-2: #1d4ed8;  /* blue-700 */
   }
 }
 
@@ -61,7 +61,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Override Cayman header gradient — Horizon sunrise from SVG */
 .page-header {
-  background: linear-gradient(120deg, #312e81, #be185d, #f97316) !important;
+  background: linear-gradient(120deg, #0b3b8c, #2563eb, #0ea5e9) !important;
 }
 
 .page-header h1,
@@ -84,10 +84,10 @@ h1, h2, h3, h4, h5, h6 {
   vertical-align: middle;
 }
 
-.score-badge[data-tier="high"] { background: #be185d; } /* rose — from SVG */
-.score-badge[data-tier="good"] { background: #e0652e; } /* sunrise orange */
-.score-badge[data-tier="mid"]  { background: #d4a017; } /* warm gold */
-.score-badge[data-tier="low"]  { background: #7c7891; } /* muted lavender */
+.score-badge[data-tier="high"] { background: #1d4ed8; } /* blue-700 */
+.score-badge[data-tier="good"] { background: #0ea5e9; } /* sky-500 */
+.score-badge[data-tier="mid"]  { background: #64748b; } /* slate-500 */
+.score-badge[data-tier="low"]  { background: #334155; } /* slate-700 */
 
 /* --- Tag Pills --- */
 .tag-line code {
@@ -100,8 +100,8 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (prefers-color-scheme: dark) {
   .tag-line code {
-    background: #342f4a !important;   /* indigo border */
-    color: #f0a848 !important;        /* dawn gold */
+    background: #0b1626 !important;
+    color: var(--hz-link) !important;
   }
 }
 
@@ -188,4 +188,129 @@ h1, h2, h3, h4, h5, h6 {
 
 .lang-section.hidden {
   display: none;
+}
+
+/* ===== Home layout (index) ===== */
+.hz-home-hero {
+  margin: 0.5rem 0 1.25rem;
+}
+
+.hz-home-hero h1 {
+  margin-bottom: 0.4rem;
+}
+
+.hz-home-subtitle {
+  color: var(--hz-text-muted);
+  margin-top: 0;
+}
+
+.hz-home-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 1rem;
+  align-items: start;
+  margin: 1rem 0 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .hz-home-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hz-card {
+  background: var(--hz-surface);
+  border: 1px solid var(--hz-border);
+  border-radius: 12px;
+  padding: 1rem 1rem 0.9rem;
+  box-shadow: 0 8px 30px rgba(2, 6, 23, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  .hz-card {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  }
+}
+
+.hz-card h2 {
+  margin-top: 0.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hz-card .hz-card-sub {
+  margin: 0.25rem 0 0.85rem;
+  color: var(--hz-text-muted);
+}
+
+.hz-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.hz-stat {
+  border: 1px solid var(--hz-border);
+  border-radius: 10px;
+  padding: 0.75rem 0.8rem;
+  background: color-mix(in srgb, var(--hz-surface), var(--hz-accent) 4%);
+}
+
+.hz-stat .k {
+  display: block;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  color: var(--hz-text-muted);
+  margin-bottom: 0.25rem;
+}
+
+.hz-stat .v {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 850;
+  color: var(--hz-text);
+}
+
+.hz-home-links {
+  margin-top: 0.75rem;
+}
+
+.hz-home-links ul {
+  margin: 0.25rem 0 0;
+}
+
+/* --- Home search --- */
+.hz-search {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.hz-search-input {
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--hz-border);
+  background: var(--hz-surface);
+  color: var(--hz-text);
+  outline: none;
+}
+
+.hz-search-input:focus {
+  border-color: color-mix(in srgb, var(--hz-accent), var(--hz-border) 35%);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--hz-accent), transparent 82%);
+}
+
+.hz-search-hint {
+  margin: 0.4rem 0 0;
+  color: var(--hz-text-muted);
+  font-size: 0.85rem;
+}
+
+.hz-search-results {
+  margin-top: 0.65rem;
+}
+
+.hz-search-results .meta {
+  color: var(--hz-text-muted);
+  font-size: 0.85em;
 }
