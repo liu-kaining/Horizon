@@ -58,11 +58,13 @@ title: Home
       </div>
     </div>
 
-    <div class="hz-home-links" markdown="1">
-    ## 文档（不抢主位）
-    - [配置指南](configuration)
-    - [信息源采集器](scrapers)
-    - [评分系统](scoring)
+    <div class="hz-home-links">
+      <h3>文档（不抢主位）</h3>
+      <ul>
+        <li><a href="{{ '/configuration' | relative_url }}">配置指南</a></li>
+        <li><a href="{{ '/scrapers' | relative_url }}">信息源采集器</a></li>
+        <li><a href="{{ '/scoring' | relative_url }}">评分系统</a></li>
+      </ul>
     </div>
   </aside>
 </div>
@@ -120,11 +122,13 @@ Welcome to [Horizon](https://github.com/thysrael/Horizon) — your AI news radar
       </div>
     </div>
 
-    <div class="hz-home-links" markdown="1">
-    ## Docs (secondary)
-    - [Configuration Guide](configuration)
-    - [Source Scrapers](scrapers)
-    - [Scoring System](scoring)
+    <div class="hz-home-links">
+      <h3>Docs (secondary)</h3>
+      <ul>
+        <li><a href="{{ '/configuration' | relative_url }}">Configuration Guide</a></li>
+        <li><a href="{{ '/scrapers' | relative_url }}">Source Scrapers</a></li>
+        <li><a href="{{ '/scoring' | relative_url }}">Scoring System</a></li>
+      </ul>
     </div>
   </aside>
 </div>
