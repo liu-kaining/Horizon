@@ -135,7 +135,11 @@ jobs:
             raise SystemExit(0)
 
           # Item header looks like: ## [Title](url) ⭐️ 8.5/10
-          re_item = re.compile(r"^##\s+\[(?P<title>.+?)\]\((?P<url>[^)]+)\)\s+⭐️\s*(?P<score>\d+(?:\.\d+)?)\/10\s*$", re.M)
+          # NOTE: avoid raw-string escaping pitfalls in Actions.
+          re_item = re.compile(
+            "^##\\s+\\[(?P<title>.*?)\\]\\((?P<url>[^)]*)\\)\\s+⭐️\\s*(?P<score>\\d+(?:\\.\\d+)?)\\/10\\s*$",
+            re.M,
+          )
           # Tags line looks like: **Tags**: `#a`, `#b`  OR **标签**: `#a`, `#b`
           re_tags = re.compile(r"^\*\*(?:Tags|标签)\*\*:\s*(?P<body>.+?)\s*$", re.M)
           re_tag = re.compile(r"`#([^`]+)`")
@@ -191,12 +195,6 @@ jobs:
 
       - name: Set current date as environment variable
         run: echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
-      # 修改点：先创建目录防止报错，再写入配置
-      - name: Add Theme Config
-        run: |
-          mkdir -p docs
-          echo "theme: jekyll-theme-cayman" > docs/_config.yml
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
