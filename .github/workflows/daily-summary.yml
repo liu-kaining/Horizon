@@ -64,24 +64,49 @@ jobs:
           total_fetched = 0
           last_digest_date = None
 
-          re_selected = re.compile(r"^##\\s+\\[", re.M)
-          re_header = re.compile(r"^>\\s*(?:From\\s+(\\d+)\\s+items,\\s+(\\d+)\\s+important|Analyzed\\s+(\\d+)\\s+items)", re.M)
-          re_date = re.compile(r"\\b(\\d{4}-\\d{2}-\\d{2})\\b")
+          # Avoid regex bracket/backslash pitfalls in CI YAML; match plain Markdown lines.
+          re_header_nums = re.compile(
+              r"^(?:From\s+(\d+)\s+items,\s+(\d+)\s+important|Analyzed\s+(\d+)\s+items)",
+              re.I | re.M,
+          )
+          re_iso_date = re.compile(r"\d{4}-\d{2}-\d{2}")
+
+          def count_digest_items(text: str) -> int:
+              n = 0
+              for line in text.splitlines():
+                  s = line.lstrip()
+                  if s.startswith("## ["):
+                      n += 1
+              return n
+
+          def parse_header_fetched(text: str) -> int | None:
+              for line in text.splitlines():
+                  t = line.strip()
+                  if not t.startswith(">"):
+                      continue
+                  inner = t.lstrip(">").strip()
+                  m = re_header_nums.match(inner)
+                  if not m:
+                      continue
+                  if m.group(1):
+                      return int(m.group(1))
+                  if m.group(3):
+                      return int(m.group(3))
+              return None
 
           for f in files:
             txt = read_text(f)
-            total_articles += len(re_selected.findall(txt))
+            total_articles += count_digest_items(txt)
 
-            m = re_header.search(txt)
-            if m:
-              if m.group(1):
-                total_fetched += int(m.group(1))
-              elif m.group(3):
-                total_fetched += int(m.group(3))
+            fetched = parse_header_fetched(txt)
+            if fetched is not None:
+                total_fetched += fetched
 
-            dm = re_date.search(f.name) or re_date.search(txt.splitlines()[0] if txt else "")
+            dm = re_iso_date.search(f.name) or (
+              re_iso_date.search(txt.splitlines()[0]) if txt else None
+            )
             if dm:
-              d = dm.group(1)
+              d = dm.group(0)
               if last_digest_date is None or d > last_digest_date:
                 last_digest_date = d
 
@@ -91,8 +116,13 @@ jobs:
             c = 0
             for p in docs_posts.glob("*.md"):
               t = read_text(p)
-              if re.search(rf"^lang:\\s*{re.escape(lang)}\\s*$", t, re.M):
-                c += 1
+              for line in t.splitlines():
+                s = line.strip()
+                if s.startswith("lang:"):
+                  val = s.split(":", 1)[1].strip()
+                  if val == lang:
+                    c += 1
+                  break
             return c
 
           total_digests_zh = count_posts_by_lang("zh")
